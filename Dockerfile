@@ -17,5 +17,11 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Tell KasmVNC to launch LM Studio on startup
-RUN mkdir -p /root/defaults && \
-    echo "lm-studio --no-sandbox" > /root/defaults/autostart
+# Force the autostart configuration on every container boot using s6-overlay
+# This guarantees it runs even if an empty config file exists in your mapped volume
+RUN mkdir -p /custom-cont-init.d && \
+    echo "#!/bin/bash" > /custom-cont-init.d/99-force-autostart && \
+    echo "mkdir -p /config/.config/openbox" >> /custom-cont-init.d/99-force-autostart && \
+    echo "echo 'sudo -E lm-studio --no-sandbox &' > /config/.config/openbox/autostart" >> /custom-cont-init.d/99-force-autostart && \
+    echo "chown -R abc:abc /config/.config/openbox" >> /custom-cont-init.d/99-force-autostart && \
+    chmod +x /custom-cont-init.d/99-force-autostart
