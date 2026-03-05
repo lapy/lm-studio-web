@@ -26,3 +26,5 @@ RUN mkdir -p /custom-cont-init.d && \
     echo "echo 'lm-studio --no-sandbox &' > /config/.config/openbox/autostart" >> /custom-cont-init.d/99-nvidia-and-autostart && \
     echo "chown -R abc:abc /config/.config/openbox" >> /custom-cont-init.d/99-nvidia-and-autostart && \
     chmod +x /custom-cont-init.d/99-nvidia-and-autostart
+
+    
