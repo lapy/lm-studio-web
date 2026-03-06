@@ -12,14 +12,21 @@ export PATH="/usr/local/cuda/bin:${PATH}"
 
 # Ensure we clean up any stale VNC session and grant GPU device access
 chmod a+rw /dev/nvidia* 2>/dev/null || true
+mkdir -p "/tmp/runtime-${USER_NAME}" && chown "${USER_NAME}:" "/tmp/runtime-${USER_NAME}"
 runuser -u "${USER_NAME}" -- vncserver -kill ${DISPLAY} >/dev/null 2>&1 || true
 
 # Start TigerVNC without authentication (SecurityTypes None), bound only to localhost
 # runuser preserves the environment (DISPLAY, LD_LIBRARY_PATH, NVIDIA_* vars)
 runuser -u "${USER_NAME}" -- vncserver ${DISPLAY} -geometry 1920x1080 -depth 24 -SecurityTypes None
 
-# Wait for the desktop to initialise, then launch LM Studio in the background
-(sleep 5 && runuser -u "${USER_NAME}" -- lm-studio --no-sandbox) &
+# Wait for the desktop to initialise, then launch LM Studio in the background.
+# DISPLAY must reach LM Studio — the NVIDIA Vulkan ICD (libGLX_nvidia.so.0)
+# requires an X11 connection to initialise. Pass it explicitly via env to
+# guarantee it survives runuser's PAM environment filtering.
+(sleep 5 && runuser -u "${USER_NAME}" -- env \
+    DISPLAY="${DISPLAY}" \
+    XDG_RUNTIME_DIR="/tmp/runtime-${USER_NAME}" \
+    lm-studio --no-sandbox) &
 
 # Start noVNC (websockify) to expose the VNC session over WebSockets on port 3000
 if command -v websockify >/dev/null 2>&1; then

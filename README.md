@@ -14,6 +14,7 @@ Make sure you have the NVIDIA container runtime configured (e.g. `nvidia-docker2
 
 ```bash
 docker run --gpus all \
+  --device /dev/nvidia-modeset \
   -p 3000:3000 \
   -p 1234:1234 \
   -v /path/on/host/lmstudio-data:/home/lmstudio/lm-data \
@@ -21,6 +22,7 @@ docker run --gpus all \
   lm-studio-web
 ```
 
+- **`--device /dev/nvidia-modeset`**: Required for Vulkan GPU discovery. `--gpus all` only maps compute devices; LM Studio uses Vulkan to enumerate GPUs and needs this modeset device.
 - **Port 3000**: noVNC web UI (VNC over WebSockets, no password).
 - **Port 1234**: LM Studio API (if enabled within LM Studio settings, listening on 0.0.0.0:1234).
 
