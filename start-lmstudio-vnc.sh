@@ -2,13 +2,24 @@
 set -e
 
 USER_NAME="lmstudio"
-DISPLAY=":1"
+export DISPLAY=":1"
 
-# Ensure we clean up any stale VNC session
-su - "${USER_NAME}" -c "vncserver -kill ${DISPLAY}" >/dev/null 2>&1 || true
+# Ensure NVIDIA/CUDA library paths are discoverable by child processes.
+# The NVIDIA container runtime mounts driver libs here; llama.cpp inside
+# LM Studio needs them to find the GPU.
+export LD_LIBRARY_PATH="/usr/local/cuda/lib64:/usr/lib/x86_64-linux-gnu:${LD_LIBRARY_PATH:-}"
+export PATH="/usr/local/cuda/bin:${PATH}"
+
+# Ensure we clean up any stale VNC session and grant GPU device access
+chmod a+rw /dev/nvidia* 2>/dev/null || true
+runuser -u "${USER_NAME}" -- vncserver -kill ${DISPLAY} >/dev/null 2>&1 || true
 
 # Start TigerVNC without authentication (SecurityTypes None), bound only to localhost
-su - "${USER_NAME}" -c "vncserver ${DISPLAY} -geometry 1920x1080 -depth 24 -SecurityTypes None"
+# runuser preserves the environment (DISPLAY, LD_LIBRARY_PATH, NVIDIA_* vars)
+runuser -u "${USER_NAME}" -- vncserver ${DISPLAY} -geometry 1920x1080 -depth 24 -SecurityTypes None
+
+# Wait for the desktop to initialise, then launch LM Studio in the background
+(sleep 5 && runuser -u "${USER_NAME}" -- lm-studio --no-sandbox) &
 
 # Start noVNC (websockify) to expose the VNC session over WebSockets on port 3000
 if command -v websockify >/dev/null 2>&1; then
@@ -19,4 +30,3 @@ else
   echo "noVNC/websockify not found in expected locations." >&2
   exit 1
 fi
-
