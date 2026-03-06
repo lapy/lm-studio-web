@@ -36,12 +36,13 @@ RUN useradd -m -s /bin/bash lmstudio && \
 USER lmstudio
 ENV HOME=/home/lmstudio
 
-RUN mkdir -p "$HOME/.vnc" && \
+RUN mkdir -p "$HOME/.vnc" "$HOME/.config/autostart" && \
+    touch "$HOME/.Xresources" && \
     echo "#!/bin/bash" > "$HOME/.vnc/xstartup" && \
-    echo "xrdb \$HOME/.Xresources" >> "$HOME/.vnc/xstartup" && \
-    echo "startxfce4 &" >> "$HOME/.vnc/xstartup" && \
-    echo "lm-studio --no-sandbox &" >> "$HOME/.vnc/xstartup" && \
+    echo "xrdb -merge \$HOME/.Xresources 2>/dev/null || true" >> "$HOME/.vnc/xstartup" && \
+    echo "exec startxfce4" >> "$HOME/.vnc/xstartup" && \
     chmod +x "$HOME/.vnc/xstartup" && \
+    printf "%s\n" "[Desktop Entry]" "Type=Application" "Name=LM Studio" "Exec=lm-studio --no-sandbox" "X-GNOME-Autostart-enabled=true" > "$HOME/.config/autostart/lm-studio.desktop" && \
     # Prepare a single LM Studio data root that can be volume-mounted
     mkdir -p "$HOME/lm-data/.lmstudio" "$HOME/lm-data/.config/LMStudio" "$HOME/lm-data/.cache/lm-studio" && \
     ln -s "$HOME/lm-data/.lmstudio" "$HOME/.lmstudio" && \
