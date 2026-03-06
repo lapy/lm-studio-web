@@ -6,6 +6,14 @@ ENV DEBIAN_FRONTEND=noninteractive \
     LD_LIBRARY_PATH="/usr/local/cuda/lib64:/usr/lib/x86_64-linux-gnu${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
     PATH="/usr/local/cuda/bin:${PATH}"
 
+# Add LunarG Vulkan SDK repo — Ubuntu 22.04's libvulkan1 (1.3.204) is too
+# old to negotiate the ICD interface with NVIDIA 580.x drivers (Vulkan 1.4).
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends wget ca-certificates && \
+    wget -qO /etc/apt/trusted.gpg.d/lunarg.asc https://packages.lunarg.com/lunarg-signing-key-pub.asc && \
+    wget -qO /etc/apt/sources.list.d/lunarg-vulkan-jammy.list https://packages.lunarg.com/vulkan/lunarg-vulkan-jammy.list && \
+    rm -rf /var/lib/apt/lists/*
+
 # Install X11, a lightweight desktop, VNC server, noVNC, and LM Studio dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -32,12 +40,6 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* && \
     # Fail early if lm-studio binary is not installed correctly
     which lm-studio
-
-# Tell the Vulkan ICD loader where to find the NVIDIA driver.
-# libGLX_nvidia.so.0 is bind-mounted into the container by the NVIDIA runtime.
-RUN mkdir -p /etc/vulkan/icd.d && \
-    echo '{"file_format_version":"1.0.0","ICD":{"library_path":"libGLX_nvidia.so.0","api_version":"1.3"}}' \
-      > /etc/vulkan/icd.d/nvidia_icd.json
 
 # Create a non-root user to run the desktop session and LM Studio
 RUN useradd -m -s /bin/bash lmstudio && \
