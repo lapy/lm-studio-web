@@ -22,7 +22,9 @@ RUN apt-get update && \
       libnss3 libxss1 libasound2 \
       libatk1.0-0 libatk-bridge2.0-0 libcups2 \
       libdrm2 libgbm1 libxkbcommon0 libxcomposite1 libxrandr2 \
-      libxdamage1 libxfixes3 libpango-1.0-0 libcairo2 && \
+      libxdamage1 libxfixes3 libpango-1.0-0 libcairo2 \
+      # Vulkan ICD loader — LM Studio uses Vulkan for GPU discovery
+      libvulkan1 && \
     wget "https://lmstudio.ai/download/latest/linux/x64?format=deb" -O /tmp/lm-studio.deb && \
     apt-get install -y /tmp/lm-studio.deb && \
     rm /tmp/lm-studio.deb && \
@@ -30,6 +32,12 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* && \
     # Fail early if lm-studio binary is not installed correctly
     which lm-studio
+
+# Tell the Vulkan ICD loader where to find the NVIDIA driver.
+# libGLX_nvidia.so.0 is bind-mounted into the container by the NVIDIA runtime.
+RUN mkdir -p /etc/vulkan/icd.d && \
+    echo '{"file_format_version":"1.0.0","ICD":{"library_path":"libGLX_nvidia.so.0","api_version":"1.3"}}' \
+      > /etc/vulkan/icd.d/nvidia_icd.json
 
 # Create a non-root user to run the desktop session and LM Studio
 RUN useradd -m -s /bin/bash lmstudio && \
