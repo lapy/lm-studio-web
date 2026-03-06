@@ -7,8 +7,8 @@ DISPLAY=":1"
 # Ensure we clean up any stale VNC session
 su - "${USER_NAME}" -c "vncserver -kill ${DISPLAY}" >/dev/null 2>&1 || true
 
-# Start TigerVNC without authentication (SecurityTypes None) and bind to all interfaces
-su - "${USER_NAME}" -c "vncserver ${DISPLAY} -geometry 1920x1080 -depth 24 -localhost no -SecurityTypes None"
+# Start TigerVNC without authentication (SecurityTypes None), bound only to localhost
+su - "${USER_NAME}" -c "vncserver ${DISPLAY} -geometry 1920x1080 -depth 24 -SecurityTypes None"
 
 # Start noVNC (websockify) to expose the VNC session over WebSockets on port 3000
 if command -v websockify >/dev/null 2>&1; then
