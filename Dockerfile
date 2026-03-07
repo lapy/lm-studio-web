@@ -18,6 +18,7 @@ RUN apt-get update && \
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
       wget curl ca-certificates \
+      python3 \
       dbus-x11 \
       xfce4 xfce4-terminal \
       tigervnc-standalone-server \
@@ -31,7 +32,9 @@ RUN apt-get update && \
       libatk1.0-0 libatk-bridge2.0-0 libcups2 \
       libdrm2 libgbm1 libxkbcommon0 libxcomposite1 libxrandr2 \
       libxdamage1 libxfixes3 libpango-1.0-0 libcairo2 \
-      # Vulkan ICD loader — LM Studio uses Vulkan for GPU discovery
+      # Vulkan ICD loader — LM Studio uses Vulkan for GPU discovery.
+      # The LunarG repo (added above) provides a 1.4.x loader compatible
+      # with NVIDIA drivers 580.x that ship a Vulkan 1.4 ICD.
       libvulkan1 && \
     wget "https://lmstudio.ai/download/latest/linux/x64?format=deb" -O /tmp/lm-studio.deb && \
     apt-get install -y /tmp/lm-studio.deb && \
@@ -40,6 +43,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* && \
     # Fail early if lm-studio binary is not installed correctly
     which lm-studio
+
 
 # Create a non-root user to run the desktop session and LM Studio
 RUN useradd -m -s /bin/bash lmstudio && \
